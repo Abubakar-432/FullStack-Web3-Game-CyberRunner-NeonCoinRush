@@ -1,0 +1,15 @@
+/* Reset margins */
+body, html, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh; /* Use min-height instead of fixed height */
+  background-color: #000;
+  font-family: monospace;
+}
+
+/* Remove "overflow: hidden" so normal pages can scroll */
+body {
+  overflow-y: auto; /* Allow vertical scrolling */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+}
