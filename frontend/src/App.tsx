@@ -6,148 +6,247 @@ import CyberStore from './CyberStore';
 import ContractABIs from './ContractABIs.json';
 import './App.css';
 
-// ⚠️ REPLACE WITH YOUR REAL NEONCOIN ADDRESS ⚠️
-const NEON_COIN_ADDRESS = "0xYOUR_NEON_COIN_ADDRESS_HERE";
+// ⚠️ REPLACE WITH YOUR REAL ADDRESSES ⚠️
+const NEON_COIN_ADDRESS = "0x12D53760bE78beB3f65321c077B5357E981eFf12";
+const HOVERBOARD_ADDRESS = "0x2ae7dcA5fFA1a9cd85786FFFF800320Ff04b38e8"; 
 
 function App() {
   const [wallet, setWallet] = useState<string>("");
   const [status, setStatus] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState(false);
   
-  // New Game Stats
   const [fails, setFails] = useState(0);
   const [balance, setBalance] = useState("0");
+  
+  // --- INVENTORY STATE ---
+  const [inventory, setInventory] = useState({ hasShield: false, hasMagnet: false, hasNFT: false });
 
   const connectWallet = async () => {
-    // Cast window to 'any' to avoid TypeScript complaining about 'ethereum'
     const { ethereum } = window as any;
-
     if (ethereum) {
       try {
         const provider = new ethers.BrowserProvider(ethereum);
-        
-        // 🛑 FORCE THE POPUP: Explicitly ask to connect
         await provider.send("eth_requestAccounts", []);
-        
         const signer = await provider.getSigner();
-        const address = await signer.getAddress();
-        setWallet(address);
+        setWallet(await signer.getAddress());
       } catch (error) {
-        console.error("Connection Error:", error);
-        alert("Failed to connect. Open console (F12) for details.");
+        alert("Connection failed!");
       }
     } else {
-      alert("MetaMask is not installed!");
+      alert("MetaMask not found!");
     }
   };
 
-  // --- NEW: Fetch Player Stats from Blockchain ---
   const fetchStats = useCallback(async () => {
     if (!wallet) return;
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const contract = new ethers.Contract(NEON_COIN_ADDRESS, ContractABIs.NeonCoin, provider);
+      const neonContract = new ethers.Contract(NEON_COIN_ADDRESS, ContractABIs.NeonCoin, provider);
+      const nftContract = new ethers.Contract(HOVERBOARD_ADDRESS, ContractABIs.HoverboardNFT, provider);
       
-      // 1. Get Fails Count
-      const failsCount = await contract.consecutiveFails(wallet);
+      // 1. Stats
+      const failsCount = await neonContract.consecutiveFails(wallet);
       setFails(Number(failsCount));
-
-      // 2. Get Balance (Available Reward)
-      const rawBal = await contract.balanceOf(wallet);
+      const rawBal = await neonContract.balanceOf(wallet);
       setBalance(parseFloat(ethers.formatUnits(rawBal, 18)).toFixed(1));
 
+      // 2. Inventory Check
+      const shield = await neonContract.hasShield(wallet);
+      const magnet = await neonContract.hasMagnet(wallet);
+      
+      // Check NFT Balance
+      let hasNFT = false;
+      try {
+          const nftBal = await nftContract.balanceOf(wallet);
+          hasNFT = Number(nftBal) > 0;
+      } catch (e) {
+          console.warn("NFT Check failed", e);
+      }
+
+      setInventory({ hasShield: shield, hasMagnet: magnet, hasNFT: hasNFT });
+
     } catch (error) {
-      console.error("Error fetching stats:", error);
+      console.error("Fetch Stats Error:", error);
     }
   }, [wallet]);
 
-  // Update stats whenever wallet connects or game ends
+  // Poll every 5 seconds
   useEffect(() => {
     fetchStats();
-  }, [fetchStats, isPlaying]); // Re-run when game active state changes
+    const interval = setInterval(fetchStats, 5000);
+    return () => clearInterval(interval);
+  }, [fetchStats]);
+
+  // Callback for store purchases
+  const handlePurchase = () => {
+      setStatus("Updating Inventory...");
+      setTimeout(() => {
+          fetchStats();
+          setStatus("");
+      }, 3000);
+  };
 
   const handleGameEnd = async (result: "win" | "fail", coins: number) => {
     setIsPlaying(false);
     if (!wallet) return alert("Connect wallet first!");
     
-    setStatus(`Processing ${result.toUpperCase()}...`);
+    // --- FIX: IMMEDIATE LOCAL RESET ---
+    // Consumables are gone after a run, regardless of result.
+    // NFT persists.
+    setInventory(prev => ({ 
+        ...prev, 
+        hasShield: false, 
+        hasMagnet: false 
+    }));
 
+    setStatus(`Processing ${result.toUpperCase()}...`);
     try {
       const response = await axios.post("http://127.0.0.1:8000/submit-run", {
         player_address: wallet,
         result: result,
         coins_collected: coins
       });
-
       if (response.data.status === "success") {
-        setStatus(`Transaction Success! Hash: ${response.data.tx_hash.substring(0, 10)}...`);
-        // Refresh stats immediately after transaction
-        setTimeout(fetchStats, 2000); 
+        setStatus(`Tx Hash: ${response.data.tx_hash.substring(0, 10)}...`);
+        // Re-fetch stats after delay to sync with blockchain reality
+        setTimeout(fetchStats, 10000); 
       } else {
-        setStatus(`Error: ${response.data.message}`);
+          setStatus("Error: " + response.data.message);
       }
     } catch (error) {
-      console.error(error);
-      setStatus("Failed to connect to backend.");
+      setStatus("Backend Error");
     }
   };
 
-  // Calculate Risk Label
-  const riskColor = fails >= 3 ? "#ff0000" : fails > 0 ? "#f9bc60" : "#00fff5";
-  const attemptsLeft = 5 - fails;
+  const riskColor = fails >= 3 ? "#ff2e63" : "#00fff5";
 
   return (
-    <div style={{ backgroundColor: "#0f0e17", color: "#fffffe", minHeight: "100vh", padding: "20px", textAlign: "center", fontFamily: "monospace" }}>
-      <h1 style={{ color: "#ff8906", textShadow: "0 0 10px #ff8906", marginBottom: "30px" }}>CYBER RUNNER: NEON RUSH</h1>
+    <div className="cyber-container">
+      {/* 1. LOGO SECTION */}
+      <div style={{ marginBottom: "40px", display: "flex", justifyContent: "center" }}>
+          <img 
+            src="/logo.png" 
+            alt="Cyber Runner Logo" 
+            style={{ 
+              maxWidth: "100%", 
+              height: "auto", 
+              maxHeight: "550px",
+              display: "block"
+            }} 
+          />
+      </div>
       
       {!wallet ? (
-        <button onClick={connectWallet} style={{ padding: "15px 30px", fontSize: "1.5rem", cursor: "pointer", background: "#f25f4c", border: "none", color: "white", borderRadius: "8px" }}>
-          CONNECT WALLET
-        </button>
+        <div className="cyber-card">
+          <p>Connect your Neural Link to begin.</p>
+          <button onClick={connectWallet} className="cyber-btn pink">
+            CONNECT WALLET
+          </button>
+        </div>
       ) : (
-        <div>
-          <div style={{ marginBottom: "20px" }}>
-             <span style={{ color: "#a7a9be" }}>Player: </span>
-             <span style={{ color: "#00fff5" }}>{wallet.substring(0, 6)}...{wallet.substring(38)}</span>
+        <>
+          <div style={{ marginBottom: "10px", fontSize: "0.9rem", color: "gray" }}>
+             OPERATOR: <span style={{ color: "#fff" }}>{wallet.substring(0,6)}...{wallet.substring(38)}</span>
           </div>
 
           {!isPlaying ? (
             <>
-              <div style={{ border: "2px dashed #ff8906", padding: "40px", margin: "20px auto", maxWidth: "600px", background: "rgba(255, 137, 6, 0.05)" }}>
-                <h2>READY RUNNER ONE?</h2>
-                
-                {/* --- NEW STATS DISPLAY --- */}
-                <div style={{ display: "flex", justifyContent: "space-around", marginBottom: "20px", fontSize: "1.1rem" }}>
+              {/* START GAME CARD */}
+              <div className="cyber-card">
+                <div className="cyber-hud">
                     <div style={{ color: riskColor }}>
                         <div>⚠️ ATTEMPTS</div>
-                        <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{fails} / 5 Used</div>
-                        <div style={{ fontSize: "0.8rem" }}>({attemptsLeft} Safe Runs Left)</div>
+                        <strong>{fails} / 5</strong>
                     </div>
-                    <div style={{ color: "#2cb67d" }}>
-                        <div>💰 WALLET</div>
-                        <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{balance} NNC</div>
-                        <div style={{ fontSize: "0.8rem" }}>Available Reward</div>
+                    <div className="neon-text-blue">
+                        <div>
+                            💰 BALANCE 
+                            <span onClick={fetchStats} style={{ cursor: "pointer", marginLeft: "10px", fontSize: "0.8rem" }}>🔄</span>
+                        </div>
+                        <strong>{balance} NNC</strong>
                     </div>
                 </div>
 
-                <p style={{ marginBottom: "30px", color: "#a7a9be" }}>Collect coins. Avoid walls. Survive 60 seconds.</p>
+                {/* Active Hoverboard Indicator */}
+                {inventory.hasNFT && (
+                    <div style={{ margin: "10px 0", color: "#ff00ff", fontWeight: "bold", textShadow: "0 0 5px #ff00ff" }}>
+                        🛹 HOVERBOARD EQUIPPED (2x Coins)
+                    </div>
+                )}
+
+                <h2 style={{ margin: "10px 0" }}>READY TO RUN?</h2>
+                <p style={{ color: "#a7a9be" }}>Collect coins. Avoid walls. Survive.</p>
                 
-                <button onClick={() => setIsPlaying(true)} style={{ padding: "15px 40px", fontSize: "1.2rem", background: "#2cb67d", border: "none", cursor: "pointer", color: "white", fontWeight: "bold", borderRadius: "50px", boxShadow: "0 0 15px #2cb67d" }}>
+                <button onClick={() => setIsPlaying(true)} className="cyber-btn glitch">
                   START MISSION
                 </button>
                 
-                <p style={{ marginTop: "20px", color: "#e53170" }}>{status}</p>
+                {/* --- ACTIVE MODULES (LOADOUT) --- */}
+                <div style={{ 
+                    marginTop: "25px", 
+                    background: "rgba(20, 20, 20, 0.8)", 
+                    padding: "15px", 
+                    borderRadius: "10px", 
+                    border: "1px solid #333",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center"
+                }}>
+                    <div style={{ fontSize: "0.8rem", color: "#a7a9be", marginBottom: "10px", letterSpacing: "2px", textTransform: "uppercase" }}>
+                        Active Modules for Next Run
+                    </div>
+                    
+                    <div style={{ display: "flex", gap: "15px", flexWrap: "wrap", justifyContent: "center" }}>
+                        {!inventory.hasShield && !inventory.hasMagnet && !inventory.hasNFT && (
+                            <span style={{ color: "#555", fontStyle: "italic" }}>No items equipped</span>
+                        )}
+                        
+                        {inventory.hasShield && (
+                            <span style={itemBadgeStyle("#00fff5")}>🛡️ SHIELD</span>
+                        )}
+                        {inventory.hasMagnet && (
+                            <span style={itemBadgeStyle("#f9bc60")}>🧲 MAGNET</span>
+                        )}
+                        {inventory.hasNFT && (
+                            <span style={itemBadgeStyle("#ff00ff")}>🛹 HOVERBOARD</span>
+                        )}
+                    </div>
+                </div>
+                
+                <p style={{ marginTop: "20px", color: "#ff00ff", fontSize: "0.9rem" }}>{status}</p>
               </div>
 
-              <CyberStore wallet={wallet} />
+              {/* STORE COMPONENT */}
+              <CyberStore wallet={wallet} onPurchase={handlePurchase} />
             </>
           ) : (
-            <CyberGame onGameOver={handleGameEnd} />
+            // PASS INVENTORY PROPS TO GAME
+            <CyberGame 
+                onGameOver={handleGameEnd} 
+                hasMagnet={inventory.hasMagnet} 
+                hasShield={inventory.hasShield}
+                hasNFT={inventory.hasNFT} 
+            />
           )}
-        </div>
+        </>
       )}
     </div>
   );
 }
+
+// Helper style for the badges
+const itemBadgeStyle = (color: string) => ({
+    display: "flex", 
+    alignItems: "center", 
+    gap: "5px", 
+    color: color, 
+    border: `1px solid ${color}`, 
+    padding: "5px 12px", 
+    borderRadius: "20px",
+    fontSize: "0.9rem",
+    fontWeight: "bold",
+    background: "rgba(0,0,0,0.3)",
+    boxShadow: `0 0 5px ${color}40` 
+});
 
 export default App;

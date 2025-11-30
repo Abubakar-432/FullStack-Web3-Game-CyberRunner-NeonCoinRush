@@ -4,9 +4,13 @@
     "function approve(address spender, uint256 amount) returns (bool)",
     "function buyShield()",
     "function buyMagnet()",
-    "function consecutiveFails(address owner) view returns (uint256)"
+    "function consecutiveFails(address owner) view returns (uint256)",
+    "function hasShield(address owner) view returns (bool)",
+    "function hasMagnet(address owner) view returns (bool)",
+    "function resetDemo()"
   ],
   "HoverboardNFT": [
-    "function mintBoard()"
+    "function mintBoard()",
+    "function balanceOf(address owner) view returns (uint256)"
   ]
 }

@@ -1,42 +1,128 @@
-#root {
-  max-width: 1280px;
+/* --- CYBERPUNK THEME VARIABLES --- */
+:root {
+  --neon-blue: #00fff5;
+  --neon-pink: #ff00ff;
+  --bg-dark: #050510;
+  --glass-bg: rgba(20, 20, 35, 0.85);
+  --grid-color: rgba(0, 255, 245, 0.05);
+}
+
+/* --- GLOBAL RESET --- */
+body {
+  background-color: var(--bg-dark);
+  color: white;
+  font-family: 'VT323', monospace; /* Pixel font */
+  margin: 0;
+  /* Moving Cyber Grid Background */
+  background-image: 
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 50px 50px;
+  min-height: 100vh;
+}
+
+/* --- CONTAINERS (Glassmorphism) --- */
+.cyber-container {
+  max-width: 800px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 20px;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.cyber-card {
+  background: var(--glass-bg);
+  border: 1px solid rgba(0, 255, 245, 0.2);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 30px;
+  position: relative;
+  overflow: hidden;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* The "Scanline" bar at top of cards */
+.cyber-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 4px;
+  background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink));
+  box-shadow: 0 0 10px var(--neon-blue);
 }
 
-.card {
-  padding: 2em;
+/* --- TYPOGRAPHY --- */
+.neon-title {
+  font-size: 4rem;
+  margin-bottom: 10px;
+  color: white;
+  text-transform: uppercase;
+  text-shadow: 
+    2px 2px 0px var(--neon-pink),
+    -2px -2px 0px var(--neon-blue);
+  letter-spacing: 4px;
 }
 
-.read-the-docs {
-  color: #888;
+.neon-text-blue { color: var(--neon-blue); text-shadow: 0 0 5px var(--neon-blue); }
+.neon-text-pink { color: var(--neon-pink); text-shadow: 0 0 5px var(--neon-pink); }
+
+/* --- BUTTONS (Interactive) --- */
+.cyber-btn {
+  background: transparent;
+  border: 2px solid var(--neon-blue);
+  color: var(--neon-blue);
+  padding: 15px 30px;
+  font-family: 'VT323', monospace;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 0 5px var(--neon-blue);
+  letter-spacing: 2px;
+  margin-top: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.cyber-btn:hover {
+  background: var(--neon-blue);
+  color: black;
+  box-shadow: 0 0 25px var(--neon-blue);
+  transform: scale(1.05);
+}
+
+/* Glitch Button (Start Mission) */
+.cyber-btn.glitch {
+  background: var(--neon-blue);
+  color: black;
+  border: none;
+}
+.cyber-btn.glitch:hover {
+  background: white;
+  box-shadow: 0 0 40px var(--neon-blue), 0 0 10px white;
+}
+
+/* Pink Variant */
+.cyber-btn.pink {
+  border-color: var(--neon-pink);
+  color: var(--neon-pink);
+  box-shadow: 0 0 5px var(--neon-pink);
+}
+.cyber-btn.pink:hover {
+  background: var(--neon-pink);
+  color: white;
+  box-shadow: 0 0 25px var(--neon-pink);
+}
+
+/* --- STATS HUD --- */
+.cyber-hud {
+  display: flex;
+  justify-content: space-between;
+  background: black;
+  border: 1px solid #333;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 1.2rem;
 }

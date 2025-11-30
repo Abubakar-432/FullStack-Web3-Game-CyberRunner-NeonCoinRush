@@ -1,15 +1,21 @@
-/* Reset margins */
+/* --- GLOBAL RESET --- */
 body, html, #root {
   margin: 0;
   padding: 0;
   width: 100%;
-  min-height: 100vh; /* Use min-height instead of fixed height */
-  background-color: #000;
-  font-family: monospace;
+  min-height: 100vh;
+  /* PURE BLACK BACKGROUND to match your logo */
+  background-color: #000000; 
+  font-family: 'VT323', monospace;
+  color: white;
+  overflow-y: auto; 
+  overflow-x: hidden;
 }
 
-/* Remove "overflow: hidden" so normal pages can scroll */
+/* Optional: Very subtle grid (barely visible) */
 body {
-  overflow-y: auto; /* Allow vertical scrolling */
-  overflow-x: hidden; /* Prevent horizontal scrolling */
+  background-image: 
+    linear-gradient(rgba(0, 255, 245, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 245, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
 }
