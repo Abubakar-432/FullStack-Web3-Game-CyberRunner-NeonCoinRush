@@ -1,5 +1,5 @@
-NeonCoin Address (A) : 0x12D53760bE78beB3f65321c077B5357E981eFf12
-HoverBoardNFT Address (B): 0x2ae7dcA5fFA1a9cd85786FFFF800320Ff04b38e8
+NeonCoin Sepolia Address (A) : 0x12D53760bE78beB3f65321c077B5357E981eFf12
+HoverBoardNFT Sepolia Address (B): 0x2ae7dcA5fFA1a9cd85786FFFF800320Ff04b38e8
 NeonCoin ABI : [
 	{
 		"inputs": [],
