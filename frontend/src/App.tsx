@@ -124,7 +124,7 @@ function App() {
   const fetchStats = useCallback(async () => {
     if (!wallet) return;
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const provider = new ethers.BrowserProvider((window as any).ethereum);
       const neonContract = new ethers.Contract(NEON_COIN_ADDRESS, ContractABIs.NeonCoin, provider);
       const nftContract = new ethers.Contract(HOVERBOARD_ADDRESS, ContractABIs.HoverboardNFT, provider);
       
