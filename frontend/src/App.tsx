@@ -303,7 +303,7 @@ function App() {
 
     setStatus(`Processing ${result.toUpperCase()}...`);
     try {
-      const response = await axios.post("http://127.0.0.1:8000/submit-run", {
+      const response = await axios.post("https://fullstack-web3-game-cyberrunner.onrender.com/submit-run", {
         player_address: wallet,
         result: result,
         coins_collected: coins
