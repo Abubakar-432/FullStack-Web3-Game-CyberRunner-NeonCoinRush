@@ -26,8 +26,8 @@ const CyberStore = ({ wallet, onPurchase, onHoverboardNameChange }: CyberStorePr
   const [tempName, setTempName] = useState("");
 
   const getContracts = async () => {
-    if (!window.ethereum) throw new Error("No wallet");
-    const provider = new ethers.BrowserProvider(window.ethereum);
+    if (!(window as any).ethereum) throw new Error("No wallet");
+    const provider = new ethers.BrowserProvider((window as any).ethereum);
     const signer = await provider.getSigner();
     return {
       neonCoin: new ethers.Contract(NEON_COIN_ADDRESS, ContractABIs.NeonCoin, signer),
