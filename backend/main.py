@@ -23,13 +23,18 @@ app.add_middleware(
 try:
     # Connect to Sepolia
     rpc_url = os.getenv("RPC_URL")
-    w3 = Web3(Web3.HTTPProvider(rpc_url))
+    print(f"DEBUG - Read RPC_URL as: '{rpc_url}'")
     
-    # Check connection
-    if w3.is_connected():
-        print(f"✅ Connected to Blockchain! Block Number: {w3.eth.block_number}")
+    if not rpc_url:
+        print("❌ ERROR: RPC_URL environment variable is empty or None!")
     else:
-        print("❌ Failed to connect to Blockchain.")
+        w3 = Web3(Web3.HTTPProvider(rpc_url.strip())) # .strip() removes accidental hidden spaces
+        
+        # Check connection
+        if w3.is_connected():
+            print(f"✅ Connected to Blockchain! Block Number: {w3.eth.block_number}")
+        else:
+            print("❌ Failed to connect to Blockchain. The URL might be blocked or invalid.")
 
     # Load Wallet & Contract
     private_key = os.getenv("PRIVATE_KEY")
